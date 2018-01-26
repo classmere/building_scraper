@@ -10,15 +10,16 @@ const scrapeBuildings = async (apiKey) => {
     })
 }
 
+// Strips unnecessary fields from retrieved building data
 const transformBuildings = (buildingData) => {
   return buildingData.map(building => {
     return {
       abbr: building.abbreviation || null,
       name: building.name || null,
       address: building.address || null,
-      buildingNumber: building.bldgID || null,
-      latitude: building.latitude || null,
-      longitude: building.longitude || null
+      buildingNumber: building.bldgID,
+      latitude: building.latitude,
+      longitude: building.longitude
     }
   })
 }
@@ -63,3 +64,5 @@ if (require.main === module) {
 }
 
 exports.scrapeBuildings = scrapeBuildings
+exports.transformBuildings = transformBuildings
+exports.insertBuildingDataToMongo = insertBuildingDataToMongo

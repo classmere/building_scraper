@@ -1,14 +1,21 @@
 version: '3'
 services:
-  db:
-    image: mongo
-    ports:
-      - 27017:27017
   building_scraper:
     build: .
     environment:
       - MONGO_URL=mongodb://db:27017
+      - API_KEY=${API_KEY}
     volumes:
       - .:/usr/src
     depends_on:
       - db
+  db:
+    image: mongo
+    ports:
+      - 27017:27017
+  db_shell:
+    image: mongo
+    depends_on:
+      - db
+      - building_scraper
+    command: ["mongo", "db:27017/test"]

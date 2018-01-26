@@ -1,21 +1,33 @@
 const rp = require('request-promise-native')
 const MongoClient = require('mongodb').MongoClient
 
-exports.scrapeBuildings = (mongoConnection, apiKey) => {
-  return rp(`https://api.oregonstate.edu/v1/locations/?apikey=${apiKey}&page%5Bsize%5D=10`)
+// Returns a promise to scrape OSU buildings
+const scrapeBuildings = async (apiKey) => {
+  return rp(`https://api.oregonstate.edu/v1/locations/?apikey=${apiKey}&page%5Bsize%5D=10000`)
     .then((body) => {
       const buildingData = JSON.parse(body).data
-      insertBuildingDataToMongo(mongoConnection, buildingData)
-    })
-    .catch((err) => {
-      throw err
+      return buildingData.map(b => b.attributes)
     })
 }
 
-const insertBuildingDataToMongo = async (mongoConnection, buildingData) => {
+const transformBuildings = (buildingData) => {
+  return buildingData.map(building => {
+    return {
+      abbr: building.abbreviation || null,
+      name: building.name || null,
+      address: building.address || null,
+      buildingNumber: building.bldgID || null,
+      latitude: building.latitude || null,
+      longitude: building.longitude || null
+    }
+  })
+}
+
+// Returns a promise to insert building data into MongoDB
+const insertBuildingDataToMongo = (mongoConnection, buildingData) => {
   try {
     const buildings = mongoConnection.db('test').collection('buildings')
-    await buildings.insertMany(buildingData)
+    return buildings.insertMany(buildingData)
   } catch (err) {
     console.log(err)
     process.exit(1)
@@ -37,8 +49,17 @@ if (require.main === module) {
       process.exit(1)
     }
 
-    await exports.scrapeBuildings(client, apiKey)
+    try {
+      const buildings = await scrapeBuildings(apiKey).then(transformBuildings)
+      await insertBuildingDataToMongo(client, buildings)
+    } catch (err) {
+      console.log(err)
+      process.exit(1)
+    }
+
     console.log('Sucessfully inserted building data')
     client.close()
   })()
 }
+
+exports.scrapeBuildings = scrapeBuildings

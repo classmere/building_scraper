@@ -10,6 +10,14 @@ const scrapeBuildings = async (apiKey) => {
     })
 }
 
+const parseIntOrNull = (number) => {
+  return isNaN(parseInt(number, 10)) ? null : parseInt(number, 10)
+}
+
+const parseFloatOrNull = (number) => {
+  return isNaN(parseFloat(number)) ? null : parseFloat(number)
+}
+
 // Strips unnecessary fields from retrieved building data
 const transformBuildings = (buildingData) => {
   return buildingData.map(building => {
@@ -17,9 +25,9 @@ const transformBuildings = (buildingData) => {
       abbr: building.abbreviation || null,
       name: building.name || null,
       address: building.address || null,
-      buildingNumber: building.bldgID,
-      latitude: building.latitude,
-      longitude: building.longitude
+      buildingNumber: parseIntOrNull(building.bldgID),
+      latitude: parseFloatOrNull(building.latitude),
+      longitude: parseFloatOrNull(building.longitude)
     }
   })
 }
@@ -66,4 +74,6 @@ if (require.main === module) {
 
 exports.scrapeBuildings = scrapeBuildings
 exports.transformBuildings = transformBuildings
+exports.parseIntOrNull = parseIntOrNull
+exports.parseFloatOrNull = parseFloatOrNull
 exports.insertBuildingDataToMongo = insertBuildingDataToMongo

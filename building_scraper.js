@@ -28,7 +28,8 @@ const transformBuildings = (buildingData) => {
 const insertBuildingDataToMongo = (mongoConnection, buildingData) => {
   try {
     const buildings = mongoConnection.db('test').collection('buildings')
-    return buildings.insertMany(buildingData)
+    return buildings.deleteMany({})
+      .then(buildings.insertMany(buildingData))
   } catch (err) {
     console.log(err)
     process.exit(1)

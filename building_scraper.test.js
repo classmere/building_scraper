@@ -1,11 +1,14 @@
 /* eslint-env jest */
 
+const fs = require('fs')
+const processResponse = require('./building_scraper').processResponse
+const transformBuilding = require('./building_scraper').transformBuilding
 const transformBuildings = require('./building_scraper').transformBuildings
 const parseIntOrNull = require('./building_scraper').parseIntOrNull
 const parseFloatOrNull = require('./building_scraper').parseFloatOrNull
 
 const building = {
-  abbr: '',
+  abbreviation: '',
   name: 'The White House',
   address: '1600 Pennsylvania Ave NW, Washington DC',
   bldgID: '0',
@@ -13,24 +16,26 @@ const building = {
   longitude: '-0.0'
 }
 
+const sampleResponse = processResponse(fs.readFileSync('./sample_response.json'))
+
 test('transform nulls blank strings, but not zero', () => {
-  const buildingData = [building]
-  expect(transformBuildings(buildingData).length).toBe(1)
-  expect(transformBuildings(buildingData)[0].abbr).toBeNull()
-  expect(transformBuildings(buildingData)[0].name).toBe('The White House')
-  expect(transformBuildings(buildingData)[0].buildingNumber).toBe(0)
-  expect(transformBuildings(buildingData)[0].latitude).toBeCloseTo(0.0, 2)
-  expect(transformBuildings(buildingData)[0].longitude).toBeCloseTo(-0.0, 2)
+  expect(transformBuildings(sampleResponse).length).toBe(sampleResponse.length)
+  expect(transformBuilding(building).abbr).toBeNull()
+  expect(transformBuilding(building).name).toBe('The White House')
+  expect(transformBuilding(building).buildingNumber).toBe(0)
+  expect(transformBuilding(building).latitude).toBeCloseTo(0.0, 2)
+  expect(transformBuilding(building).longitude).toBeCloseTo(-0.0, 2)
 })
 
 test('parses latitude and longitude strings to floats', () => {
-  const buildingData = Array(Object.assign(building, {
+  const buildingData = {
+    ...building,
     latitude: 'notanumber',
     longitude: 'def not a num'
-  }))
-  expect(transformBuildings(buildingData)[0].name).toBe('The White House')
-  expect(transformBuildings(buildingData)[0].latitude).toBeNull()
-  expect(transformBuildings(buildingData)[0].longitude).toBeNull()
+  }
+  expect(transformBuilding(buildingData).name).toBe('The White House')
+  expect(transformBuilding(buildingData).latitude).toBeNull()
+  expect(transformBuilding(buildingData).longitude).toBeNull()
 })
 
 test('parseIntOrNull functions as expected', () => {
@@ -55,4 +60,15 @@ test('parseFloatOrNull functions as expected', () => {
   expect(parseFloatOrNull('not a num')).toBeNull()
   expect(parseFloatOrNull(null)).toBeNull()
   expect(parseFloatOrNull({})).toBeNull()
+})
+
+test('converts all abbreviations to uppercase', () => {
+  expect(transformBuilding({...building, abbreviation: 'WH'}).abbr).toBe('WH')
+  expect(transformBuilding({...building, abbreviation: 'Wh'}).abbr).toBe('WH')
+  expect(transformBuilding({...building, abbreviation: 'cApiTaliZ3Th1s'}).abbr).toBe('CAPITALIZ3TH1S')
+  for (const b of transformBuildings(sampleResponse)) {
+    if (b.abbr != null) {
+      expect(typeof b.abbr).toBe('string')
+    }
+  }
 })

@@ -1,4 +1,4 @@
-# building_scraper
+# building_scraper [![Build Status](https://travis-ci.org/classmere/building_scraper.svg?branch=master)](https://travis-ci.org/classmere/building_scraper)
 Scrapes info about Oregon State University buildings, placing the data in a
 MongoDB database.
 
@@ -22,3 +22,6 @@ Running in docker-compose is intended only for development purposes. To aid in d
 ```bash
 docker-compose run db_shell
 ```
+
+## Tests
+Tests can be run with the standard `npm test`.
